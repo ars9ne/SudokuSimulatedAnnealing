@@ -15,13 +15,14 @@ def costfunction(array):
     xlist = []
     j = 1
     for i in range(size):
-        unique, counts = np.unique(array[i], return_counts=True)
-        # print(np.asarray((unique, counts)).T)
+        unique, counts = np.unique(sudoku[i], return_counts=True)
+        checkx = (np.asarray((unique, counts)).T)
         # print(len(unique)) # количество уникальных чисел в строке
         # print(counts) # выводит количество каждого уникального символа в строке
-        for j in range(len(unique)):
-            if counts[j] > 1:
-                xlist.append(counts[j])
+        for j in range(len(checkx)):
+            #print(str(checkx[j][1]))
+            if checkx[j][1] > 1:
+                xlist.append(checkx[j][1])
 
     #print("ОСЬ Х: " + str(xlist))
 
@@ -30,13 +31,14 @@ def costfunction(array):
     rsudoku = np.rot90(array)  # переворачиваем по осям
     # print(rsudoku)
     for i in range(size):
-        unique, counts = np.unique(array[i], return_counts=True)
-        # print(np.asarray((unique, counts)).T)
+        unique, counts = np.unique(rsudoku[i], return_counts=True)
+        checky = (np.asarray((unique, counts)).T)
         # print(len(unique)) # количество уникальных чисел в ряду
-        # print(counts) # выводит количество каждого уникального символа в ряду
-        for j in range(len(unique)):
-            if counts[j] > 1:
-                ylist.append(counts[j])
+        # print(str(unique))
+        # print(str(counts)) # выводит количество каждого уникального символа в ряду
+        for j in range(len(checky)):
+            if checky[j][1] > 1:
+                ylist.append(checky[j][1])
     ylist = ylist[::-1]
     #print("ОСЬ Y: " + str(ylist))
     costf = sum(xlist) + sum(ylist)
@@ -65,7 +67,7 @@ while True:
     costf = costfunction(randsudoku)
     iterations.append(iteration)
     s.append(costf)
-    if costf < 30 or len(s)>1000000:
+    if costf < 30 or len(s)>1000:
         #print(randsudoku)
         #print(costf)
         break
