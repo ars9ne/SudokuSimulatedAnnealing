@@ -185,7 +185,7 @@ def simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, max_s
     return best_solution
 
 
-max_stagnation_iterations = 1000  # Количество итераций без улучшения до перезапуска
+max_stagnation_iterations = 50  # Количество итераций без улучшения до перезапуска
 max_restarts = 5  # Максимальное количество перезапусков
 initial_temp = 1.0
 cooling_rate = 0.01
