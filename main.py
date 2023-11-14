@@ -133,9 +133,10 @@ def simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, max_s
     costs = []  # Для отслеживания стоимости
     temperatures = []  # Для отслеживания температуры
     iterations_list = []  # Для отслеживания итераций
-
+    iterations = 0
     while restarts < max_restarts:
-        iterations = 0
+        if best_cost == 0:
+            break
         while temperature > stopping_temp:
             neighbor = generate_neighbor(np.copy(current_solution), sudoku)
             neighbor_cost = costfunction(neighbor)
@@ -185,8 +186,8 @@ def simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, max_s
     return best_solution
 
 
-max_stagnation_iterations = 50  # Количество итераций без улучшения до перезапуска
-max_restarts = 5  # Максимальное количество перезапусков
+max_stagnation_iterations = 5000  # Количество итераций без улучшения до перезапуска
+max_restarts = 100  # Максимальное количество перезапусков
 initial_temp = 1.0
 cooling_rate = 0.01
 stopping_temp = 0.0001
