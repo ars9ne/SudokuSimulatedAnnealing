@@ -10,20 +10,25 @@ sudoku = np.array(
 size = 9
 
 
-# Costfunction
 def costfunction(array):
-    # X SUMMATOR
-    xlist = []
-    j = 1
+    cost = 0
+    size = 9
+
+    # Проверка строк и столбцов
     for i in range(size):
-        unique, counts = np.unique(sudoku[i], return_counts=True)
-        checkx = (np.asarray((unique, counts)).T)
-        # print(len(unique)) # количество уникальных чисел в строке
-        # print(counts) # выводит количество каждого уникального символа в строке
-        for j in range(len(checkx)):
-            #print(str(checkx[j][1]))
-            if checkx[j][1] > 1:
-                xlist.append(checkx[j][1])
+        row_unique_count = len(set(array[i]))  # уникальные значения в строке
+        col_unique_count = len(set(array[:, i]))  # уникальные значения в столбце
+        cost += (size - row_unique_count) + (size - col_unique_count)
+
+    # Проверка подквадратов 3x3
+    for i in range(0, size, 3):
+        for j in range(0, size, 3):
+            block = array[i:i+3, j:j+3]  # извлекаем подквадрат
+            block_unique_count = len(set(block.flatten()))  # уникальные значения в подквадрате
+            cost += (size - block_unique_count)
+
+    return cost
+
 
     #print("ОСЬ Х: " + str(xlist))
 
@@ -117,44 +122,76 @@ iteration = 1
 # # График
 
 
-def simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, iterations, s):
+def simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, max_stagnation_iterations, max_restarts):
+    best_solution = None
+    best_cost = float('inf')
+    stagnation_counter = 0
+    restarts = 0
+    temperature = initial_temp
     current_solution = generate_initial_solution(sudoku)
     current_cost = costfunction(current_solution)
-    temperature = initial_temp
-    iteration = 1
-    while temperature > stopping_temp:
-        neighbor = generate_neighbor(np.copy(current_solution), sudoku)
-        neighbor_cost = costfunction(neighbor)
-        cost_diff = neighbor_cost - current_cost
+    costs = []  # Для отслеживания стоимости
+    temperatures = []  # Для отслеживания температуры
+    iterations_list = []  # Для отслеживания итераций
 
-        if cost_diff < 0:
-            current_solution, current_cost = neighbor, neighbor_cost
-        else:
-            if random.uniform(0, 1) < math.exp(-cost_diff / temperature):
+    while restarts < max_restarts:
+        iterations = 0
+        while temperature > stopping_temp:
+            neighbor = generate_neighbor(np.copy(current_solution), sudoku)
+            neighbor_cost = costfunction(neighbor)
+            cost_diff = neighbor_cost - current_cost
+
+            if cost_diff < 0:
                 current_solution, current_cost = neighbor, neighbor_cost
+                stagnation_counter = 0
+            else:
+                if random.uniform(0, 1) < math.exp(-cost_diff / temperature):
+                    current_solution, current_cost = neighbor, neighbor_cost
+                stagnation_counter += 1
 
-        temperature *= (1 - cooling_rate)
-        iterations.append(iteration)
-        s.append(current_cost)
-        iteration += 1
+            if current_cost < best_cost:
+                best_solution, best_cost = current_solution, current_cost
 
-    return current_solution
+            temperature *= (1 - cooling_rate)
+            iterations += 1
+
+            costs.append(current_cost)
+            temperatures.append(temperature)
+            iterations_list.append(iterations)
+
+            if stagnation_counter >= max_stagnation_iterations:
+                break
+
+        if stagnation_counter >= max_stagnation_iterations or temperature <= stopping_temp:
+            current_solution = generate_initial_solution(sudoku)
+            current_cost = costfunction(current_solution)
+            temperature = initial_temp
+            stagnation_counter = 0
+            restarts += 1
+
+        if restarts >= max_restarts:
+            break
+
+    # Построение графика
+    plt.figure(figsize=(10, 5))
+    plt.plot(iterations_list, costs, label='Cost Function', color='blue')
+    plt.xlabel('Iteration')
+    plt.ylabel('Cost')
+    plt.title('Simulated Annealing Progress')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    return best_solution
 
 
+max_stagnation_iterations = 1000  # Количество итераций без улучшения до перезапуска
+max_restarts = 5  # Максимальное количество перезапусков
 initial_temp = 1.0
 cooling_rate = 0.01
 stopping_temp = 0.0001
 
 
-#запуск
-solution = simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, iterations, s)
-
+# Запускаем алгоритм симулированного отжига с перезапусками
+solution = simulated_annealing(sudoku, initial_temp, cooling_rate, stopping_temp, max_stagnation_iterations, max_restarts)
 print(solution)
-
-
-fig, ax = plt.subplots()
-ax.set(xlabel='Iteration (№)', ylabel='Costf (Sum of x and y)',
-       title='Sudoku')
-ax.plot(iterations, s)
-plt.grid(True)
-plt.show()
